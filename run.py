@@ -1,6 +1,9 @@
 """
 @Author: Joris van Vugt, Moira Berens, Leonieke van den Bulk
 
+@Author Dimitar 'mechachki' Dimitrov
+@Author Carla Schindler
+
 Entry point for the creation of the variable elimination algorithm in Python 3.
 Code to read in Bayesian Networks has been provided. We assume you have installed the pandas package.
 
@@ -30,19 +33,21 @@ if __name__ == '__main__':
     query = 'Alarm'
 
     # The evidence is represented in the following way (can also be empty when there is no evidence): 
-    evidence = {'Burglary': 'True'}
+    evidence = {'Burglary': 'True'}  # {, 'Earthquake' : 'True'}
 
     # Determine your elimination ordering before you call the run function. The elimination ordering   
     # is either specified by a list or a heuristic function that determines the elimination ordering
     # given the network. Experimentation with different heuristics will earn bonus points. The elimination
     # ordering can for example be set as follows:
+
     #elim_order = net.nodes
     #elim_order = ['Earthquake', 'JohnCalls', 'MaryCalls']
+
     elim_order = net.nodes
     elim_order.remove(query)
     for k in evidence.keys():
         elim_order.remove(k)
-    print(elim_order)
+    print('this is the elim order:\n',elim_order)
 
     #Call the variable elimination function for the queried node given the evidence and the elimination ordering as follows:
     ve.run(query, evidence, elim_order)
