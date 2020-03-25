@@ -13,36 +13,67 @@ class Factor():
         self.probabilities = probabilities
 
     """
-    reduction over observed variable. please refer to variable_elim.py's reduce 
-    in our solution we do the reduction as part of pre-processing in variable_elim.py, 
-    before factors are even created, as such we make use of the dictionary used in the 
-    bayesnet for faster processing. this function in its current state might not work, 
-    I haven't tested it and don't plan to, wrote it in 5 mins just so I can have a 
-    reduction function in the factor
+    reduction over observed variable
     """
     def reduction(self, observedName, observedValue):
+        print('TRIGGERED: REDUCTION')
+        print('Reducing variable ', observedName, ', with observed value ',
+              observedValue, '\nFrom Factor with variables: ', self.variables,
+              'and probability table\n',self.probabilities)
         try:
+            probs = copy.deepcopy(self.probabilities)
+            vars = copy.deepcopy(self.variables)
+
             #locate target variable's index
-            indexObserved = self.variables.index(observedName)
+            indexObserved = vars.index(observedName)
+            print('index of observed variable: ', indexObserved)
+            #delete from list of variables
+            if(len(vars)>1):
+                vars.remove(observedName)
             #queue for deletion
             qReduction=[]
+
             #go through each outcome in probability table
-            for outcome in range (0, len(self.probabilities)):
+            for outcome in range (0, len(probs)):
                 #if the value of variable at index of target variable is different than observed value
                 #a.k.a. if the observed variable's value is different from observed value
-                if self.probabilities[outcome][indexObserved]!=observedValue:
+                if probs[outcome][indexObserved] != observedValue:
                     #queue this outcome for deletion
                     qReduction.append(outcome)
             #delete all outcomes inconsistent with what we've observed
-            np.delete(self.probabilities, qReduction, axis=0)
+            probs = np.delete(probs, qReduction, 0)
+            #create new table
+            newProbs = []
+            if (len(vars) > 1):
+                for outcome in probs:
+                    #go through each outcome
+                    newOutcome = []
+                    #create new outcome which keeps only unobserved variables
+                    for var in range(0, len(outcome)):
+                        if var!= indexObserved:
+                            newOutcome.append(outcome[var])
+                    #append new outcome to table of new outcomes
+                    newProbs.append(newOutcome)
+                newProbs = np.asarray(newProbs)
+            else:
+                newProbs = probs
+            print('SUCCESSFUL REDUCTION, result:\nFactor with variables: ',
+                  vars, '\nwith probability table table:\n', newProbs)
+            return Factor(vars,newProbs)
         except:
-            print('Reduction failed, observed variable does not concern this factor')
+            print('REDUCTION FAILED, observed variable does not concern this factor')
+            return self
         # if the observed variable is not in this factor just return factor as is
-        return self
+
     """
     compute product of two factors
     """
     def product(self, other):
+
+        print('TRIGGERED PRODUCT\n','product of factors: ', self.variables,' and ', other.variables)
+
+        if (self.variables == other.variables):
+            raise Exception('product of itself')
 
         #find common variables of two factors
         common = []
@@ -131,6 +162,9 @@ class Factor():
                             #append the new, product outcome to the new table of outcomes
 
         #return a new Factor, where the outcomes are products of the outcomes of input factors
+
+        print('result of product:\nvariables:', newFactorVars,'\nprobability table:\n', newFactorProbs)
+
         return Factor(newFactorVars, np.asarray(newFactorProbs))
 
     """
@@ -249,6 +283,8 @@ class Factor():
             # get the indices of the non-marginalized variables
             indexRest = [i for i in range(0, len(self.variables))]
             indexRest.remove(indexVar)
+            if(len(indexRest)<1):
+                raise Exception('no variables besides the target of marginalization')
             # prepare a variable that will hold the resulting table of instances. Each instance has multiple outcomes.
             # in this code I refer to an instance a set of outcomes who have one or more locked variables which I want
             # to stay the same throughout the set, with the rest of the variables mutating throughout the set.
@@ -307,6 +343,6 @@ class Factor():
             return Factor(newVars, np.asarray(marginalProb))
         except:
 
-            print('Marginalization failed, factor does not contain variable ', varName)
+            print('Marginalization failed, factor does not contain variable or target is only variable', varName)
         # if the variable is not present in this factor, in which way just return the factor as is
         return self

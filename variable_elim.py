@@ -8,6 +8,7 @@ Class for the implementation of the variable elimination algorithm.
 
 """
 import factor
+import copy
 
 class VariableElimination():
 
@@ -36,27 +37,78 @@ class VariableElimination():
 
         """
 
-        prob = self.network.probabilities
-        self.PreProcessing(prob, observed)
-        self.createFactors(prob)
 
-        #todo: implement Variable Elimination
+        prob = self.network.probabilities
+        # self.PreProcessing(prob, observed)
+
+        evidence = copy.deepcopy(observed)
+        factors = self.createFactors(prob)
+
+        reducedFactors = []
+        for var, val in evidence.items():
+            # remove evidence from elimination order
+            if var in elim_order:
+                elim_order.remove(var)
+            # reduce factors based on evidence
+            for factor in factors:
+                reducedFactors.append(factor.reduction(var, val))
+
+        print('POST-REDUCTION')
+        for f in reducedFactors:
+            print(f.variables, f.probabilities)
+
+        if query in elim_order:
+            elim_order.remove(query)
+
+        for var in elim_order:
+            reducedFactors = self.eliminateVariable(var, reducedFactors)
+
+        for f in reducedFactors:
+            print(f.variables, f.probabilities)
+
+
+    def eliminateVariable(self, var, factors):
+        outputFactors = []
+        factorQueue = []
+
+        for f in factors:
+            if var in f.variables:
+                factorQueue.append(f)
+            else:
+                outputFactors.append(f)
+
+        productFactor = factorQueue[0]
+
+        for i in range(1,len(factorQueue)):
+            try:
+                productFactor = productFactor.product(factors[i])
+            except Exception as e:
+                print(e)
+        outputFactors.append(productFactor.marginalization(var))
+        return outputFactors
 
     def createFactors(self, prob):
-        self.factors = []
+        factors = []
         for k in prob.keys():
-            self.factors.append(factor.Factor([key for key in prob.get(k).keys() if key != 'prob'], #
+            factors.append(factor.Factor([key for key in prob.get(k).keys() if key != 'prob'], #
                           prob.get(k).values))
         print('factors that were created:')
-        for f in self.factors:
+        for f in factors:
             print('factor variables: ',f.variables)
-            print('factor probability table: ',f.probabilities)
+            print('factor probability table:\n',f.probabilities)
+
+        return factors
 
     def PreProcessing(self, prob, observed):
         for k in observed.keys():
             print('Observed variable: ', k, ' with value ', observed.get(k))
             self.reduce(prob, k, observed.get(k))
 
+    """
+    a reduction used during pre-processing. theoretically faster than the factor's built in
+    reduction as it uses dictionary to quickly look up values, incorrect as to what we desire
+    in output (it keeps the reduced variable and it's values in the probability table)
+    """
     def reduce(self, prob, observedName, observedValue):
         prob.pop(observedName)
         #remove the observed variable from the list of variables
