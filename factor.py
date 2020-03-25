@@ -1,6 +1,19 @@
 """
-@Author Dimitar 'mechachki' Dimitrov
-@Author Carla Schindler
+@Author Dimitar 'mechachki' Dimitrov s1018291
+@Author Carla Schindler s1017233
+
+important:
+the factors work with non-binary variables
+throughout the factors I use the term instance, in the context of our solution I use instance to refer to
+set of outcomes that have a few variables with the same value throughout the instance and a few which are mutating
+
+Reduction function in Factor does not work as intended, instead we use a function in variable_elim.py to reduce observed
+variables, we believe this is justified because this way we can utilize the dictionary in which the probability
+distribution come packaged which is supposed to be faster as opposed to our function that iterates over each factor
+removing unwanted outcomes.
+For this reason we have decided to not fix reduction in Factor and instead reduce before we even create the factors,
+in variable_elim.py
+
 """
 
 import numpy as np
@@ -161,9 +174,11 @@ class Factor():
                             newFactorProbs.append(newOutcome)
                             #append the new, product outcome to the new table of outcomes
 
+        newFactorProbs = np.asarray(newFactorProbs)
+
         #return a new Factor, where the outcomes are products of the outcomes of input factors
 
-        print('result of product:\nvariables:', newFactorVars,'\nprobability table:\n', newFactorProbs)
+        print('result of product:\nvariables:', newFactorVars,'\nprobability table:\n', np.asarray(newFactorProbs))
 
         return Factor(newFactorVars, np.asarray(newFactorProbs))
 
@@ -178,7 +193,7 @@ class Factor():
     
     IT IS EXTREMELY IMPORTANT THAT THE ORDER OF VARIABLES IN RESULT IS 
     [ COMMON VARIABLE 1, COMMON VARIABLE 2, ETC. , UNCOMMON VARIABLE FACTOR1 1, ETC. , UNCOMMON VARIABLE FACTOR 2, ETC.]
-    IT HAS TO STAY CONSISTENT WITH THE ORDERING FROM LINES 83-85 OR THE RESULT IS SIMPLY. NOT. CORRECT.
+    IT HAS TO STAY CONSISTENT WITH THE ORDERING FROM LINES 133-145 OR THE RESULT IS SIMPLY. NOT. CORRECT.
     """
     def multiply(self, outcome1, outcome2, indexCommon1, indexCommon2):
         outcome = []
@@ -194,7 +209,7 @@ class Factor():
             if i not in indexCommon2:
                 outcome.append(outcome2[i])
         #then we compute probability value, which is simply product of prob value of outcome 1 and outcome 2
-        outcome.append(outcome1[-1]*outcome2[-1])
+        outcome.append(float(outcome1[-1])*float(outcome2[-1]))
         #return new outcome, product of input outcomes
         return outcome
 
@@ -274,7 +289,7 @@ class Factor():
     marginalization of 2 factors
     """
     def marginalization(self, varName):
-        print('Marginalization of factor:', self.variables, "\n over ", varName)
+        print('Marginalization of factor:', self.variables, " over ", varName)
         # attempt to do marginalization, might fail if the variable
         # over which we're trying to marginalize is not in this factor
         try:
@@ -283,6 +298,8 @@ class Factor():
             # get the indices of the non-marginalized variables
             indexRest = [i for i in range(0, len(self.variables))]
             indexRest.remove(indexVar)
+
+            #raise an exception if the only variable in the factor is the queried one
             if(len(indexRest)<1):
                 raise Exception('no variables besides the target of marginalization')
             # prepare a variable that will hold the resulting table of instances. Each instance has multiple outcomes.
@@ -324,7 +341,7 @@ class Factor():
                         newVals.append(instance[0][i])
                 #sum out the probability values in this instance)
                 for outcome in instance:
-                    sum = sum + outcome[-1]
+                    sum = sum + float(outcome[-1])
                 #add the probability sum to the new outcome
                 newVals.append(sum)
                 #add the newly created marginalized outcome to the new table of marginalized outcomes
@@ -340,9 +357,11 @@ class Factor():
                     #add it to the new variables
 
             #return the new, marginalized factor
-            return Factor(newVars, np.asarray(marginalProb))
-        except:
-
+            marginalProb = np.asarray(marginalProb)
+            print('RESULT FROM MARGINALIZATION\nvariables:\n',newVars,'\nprobability table:\n',marginalProb)
+            return Factor(newVars, marginalProb)
+        except Exception as e:
+            print(e)
             print('Marginalization failed, factor does not contain variable or target is only variable', varName)
         # if the variable is not present in this factor, in which way just return the factor as is
         return self
