@@ -22,3 +22,5 @@ For example one possible instance of 3 binary variables `{'Burglary', 'Earthquak
 ]
 ```
 
+## Bayesian Inference Networks
+Bayesian inference networks this was tested with can be found at 
