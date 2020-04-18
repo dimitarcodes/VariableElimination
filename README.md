@@ -25,4 +25,4 @@ For example one possible instance of 3 binary variables `{'Burglary', 'Earthquak
 ## Bayesian Inference Networks
 Bayesian inference networks (.bif extension) can be found at https://www.bnlearn.com/bnrepository/
 
-This assignment called for the implementation to work with the Earthquake network from [bnlearn](https://www.bnlearn.com/bnrepository/discrete-small.html#earthquake) but it also works with networks that have non-binary variables.
+This assignment called for the implementation to work with the Earthquake network from [bnlearn](https://www.bnlearn.com/bnrepository/) but it also works with networks that have non-binary variables (tested with [earthquake](https://www.bnlearn.com/bnrepository/discrete-small.html#earthquake), [alarm](https://www.bnlearn.com/bnrepository/discrete-medium.html#alarm), [asia](https://www.bnlearn.com/bnrepository/discrete-small.html#asia) and [sachs](https://www.bnlearn.com/bnrepository/discrete-small.html#sachs))
